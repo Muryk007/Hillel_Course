@@ -3,7 +3,6 @@
 # 2 - In modified list swap elements with indexes 1 and 5 (1<->5). Print result
 # 3 - check that all people in modified list with records indexes 6, 10, 13
 #   have age >=30. Print condition check result
-from Hillel_Course.lesson_05_1.homework_05_1 import search_criteria
 
 people_records = [
   ('John', 'Doe', 28, 'Engineer', 'New York'),
