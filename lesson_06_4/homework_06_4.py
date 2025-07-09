@@ -8,6 +8,5 @@ duplicates = []
 for item in my_lst:
         if item % 2 == 0:
             duplicates.append(item)
-        print(duplicates)
 
 print("Сума усіх парних чисел =", sum(duplicates))
