@@ -1,7 +1,7 @@
 import requests
 import logging
 
-logger = logging.getLogger("nasa_controller")
+logger = logging.getLogger("nasa")
 
 class NasaController:
     def __init__(self,

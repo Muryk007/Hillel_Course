@@ -8,7 +8,7 @@ import logging
 
 logger = logging.getLogger('nasa')
 
-def nasa_photos(sol=1000, camera='fhaz', api_key='DEMO_KEY'):
+def nasa_photos(sol=1000, camera='fhaz', api_key='b0r8xbdoqU55nQncQO4swlMYhQaWdgRBSwrbgtCj'):
     photos_dir = pathlib.Path(__file__).parent / "NASA_Mars_Photos"
     photos_dir.mkdir(exist_ok=True)
 
