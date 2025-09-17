@@ -1,13 +1,17 @@
-from sqlalchemy import Column, Integer, String
-from sqlalchemy.ext.declarative import declarative_base
-
+from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy.orm import relationship
+from core.db.orm_lesson.tables.base import Base
 # Базовий клас для визначення моделей даних
-Base = declarative_base()
+
 
 # Визначення моделі даних (таблиці) за допомогою класу
-class User(Base):
-    __tablename__ = 'users_orm'
+class Students(Base):
+    __tablename__ = 'students_orm'
 
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    name = Column(String)
-    age = Column(Integer)
+    student_id = Column(Integer, primary_key=True, autoincrement=True)
+    student_name = Column(String, nullable=False)
+    student_age = Column(Integer)
+    course_id = Column(Integer, ForeignKey("courses_orm.course_id"))
+
+    # кожен студент належить одному курсу
+    course = relationship("Courses", back_populates="students")
