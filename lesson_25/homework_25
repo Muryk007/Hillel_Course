@@ -1,0 +1,58 @@
+XPath та CSS локатори для https://qauto2.forstudy.space/
+
+--- XPath ---
+
+//section[@class='section hero']
+//div[@class='hero-descriptor']
+//button[text()='Sign up']
+//div//a[text()='Home']
+//p[contains(@class, 'hero-descriptor')]
+//iframe[contains(@class, 'hero-video') and contains(@src, 'youtube')]
+//button[contains(@class, 'ytp-large-play-button')]
+//div//p[starts-with(@class, 'about-') and contains(text(), 'manuals')]
+//div[@class='section contacts']//h2[text()='Contacts']
+//div[@class='section contacts']//a[contains(text(), '@')]
+//a[@class='contacts_link display-4' and text()='ithillel.ua']
+//div[@class='section contacts']//span[contains(@class, 'icon-facebook')]
+//div[@class='container']//p[text()='Hillel auto developed in Hillel IT school for educational purposes of QA courses.']
+//div[@class='container']//a[@class='header_logo']
+//h1[@class='hero-descriptor_title display-2' and text()='Do more!']
+//p[contains(@class, 'hero-descriptor') and contains(text(), 'you will')]
+//div[@class='section contacts']
+//div[@class='row']
+//div[@class='row']//p[text()='Log fuel expenses']
+//p[contains(@class, 'descr') and contains(text(), 'expenses')]
+//button[contains(@class, 'link') and contains(text(), 'About')]
+//button[contains(@class, 'outline') and contains(text(), 'Sign')]
+//div[@class='col-12 col-lg-4']
+//a[contains(@class, 'socials')]//span[contains(@class, 'socials')]
+//div[text()='Якщо відтворення незабаром не почнеться, перезапустіть пристрій.']
+
+--- CSS ---
+
+div.hero-descriptor
+#js-4037129759
+#js-1124342058
+div#player
+div.ytp-spinner
+div.section.contacts#contactsSection
+.section
+.ytp-muted-autoplay-bottom-buttons
+#aboutSection
+.app-wrapper
+.global-layout
+a[href*='ithillel.ua']
+img[src$='.jpg']
+button.btn.header-link
+a.btn.header-link[href*='/']
+svg[height='100%'][width='100%'][viewBox='0 0 24 24']
+svg[height='100%'][width='100%'][viewBox='0 0 24 24'][version='1.1']
+a.ytp-watermark.yt-uix-sessionlink[href*='youtube']
+use.ytp-svg-shadow
+a[target='_blank'].socials_link
+a[target='_blank'].socials_link[href*='t.me']
+a[target='_blank'][rel='nofollow']
+*[fill='none'][xmlns*='w3']
+a.contacts_link.h4[href*='mailto']
+a.contacts_link.display-4[href*='hillel']
+img.about-picture_img[src*='.jpg']
