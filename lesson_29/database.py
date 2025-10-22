@@ -1,8 +1,10 @@
+import os
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, session
-from core.db.orm_lesson.tables.base import Base
-from core.db.orm_lesson.tables.courses import Courses
-from core.db.orm_lesson.tables.students import Students
+from core.base import Base
+from core.students import Students
+from core.courses import Courses
 
 import logging.config
 import pathlib
@@ -10,39 +12,36 @@ import pathlib
 # Трішки змінив логер та підключення до БД
 def init_log():
     log_path = pathlib.Path(__file__).parent / "logging.conf"
-    logging.config.fileConfig(log_path)
+    if log_path.exists():
+        logging.config.fileConfig(log_path)
+    else:
+        logging.basicConfig(level=logging.INFO)
+        logging.warning("logging.conf не знайдено — використовую базове логування.")
+
 
 init_log()
 
 def init_db():
-
-    PG_SQL = "postgresql://oleh.muratov@localhost:5432/Hillel_Course_DB"
+    PG_SQL = os.getenv(
+        "DATABASE_URL",
+        "postgresql://postgres:postgres@localhost:5432/Hillel_Course_DB"
+    )
     engine = create_engine(PG_SQL)
-
     Base.metadata.create_all(engine)
-    Session = sessionmaker(bind=engine)
+    SessionLocal = sessionmaker(bind=engine)
+    return SessionLocal
 
-    return Session
 
 Session = init_db()
 
 def default_values():
     session = Session()
+    courses = ['Mathematics', 'Chemistry', 'Physics', 'ART', 'Philosophy']
 
-    # додаємо дефолтні курси
-    courses = [
-        'Mathematics',
-        'Chemistry',
-        'Physics',
-        'ART',
-        'Philosophy',
-    ]
-
-    # робимо перевірку, що однакових курсів не має
+    # Додаємо нові курси
     existing_courses = {c.course_name for c in session.query(Courses).all()}
-    add_courses = [Courses(course_name=name) for name in courses if name not in existing_courses]
-
-    session.add_all(add_courses)
+    new_courses = [Courses(course_name=name) for name in courses if name not in existing_courses]
+    session.add_all(new_courses)
 
     # додаємо дефолтних студентів
     students = [
@@ -77,107 +76,86 @@ def default_values():
 
     session.commit()
     session.close()
+    logging.info("Дефолтні дані ініціалізовано.")
 
-default_values()
-
-def add_course(course_name):
+def add_course(course_name: str):
     session = Session()
-    #course = [(course_name)]
-
-    # робимо перевірку, що однакових курсів не має
-    existing_courses = session.query(Courses).filter_by(course_name=course_name).first()
-    if existing_courses:
-        logging.error(f"Курс {course_name} вже існує")
+    exists = session.query(Courses).filter_by(course_name=course_name).first()
+    if exists:
+        logging.warning(f"Курс '{course_name}' вже існує.")
     else:
-        course = Courses(course_name=course_name)
-        session.add(course)
+        session.add(Courses(course_name=course_name))
         session.commit()
-        logging.info(f"До бази даних Courses_orm був доданий курс: {course_name}")
-
+        logging.info(f"Додано курс: {course_name}")
     session.close()
-
-add_course('Geometry')
 
 # INSERT - додаємо студента (сутність)
-def add_student(name, age, course_id):
+def add_student(name: str, age: int, course_id: int):
     session = Session()
-    student = [(name, age, course_id)]
-
-    # робимо перевірку, що один студент не може мати курси з однаковим id
-    for name, age, course_id in student:
-        exists = session.query(Students).filter_by(student_name=name, course_id=course_id).first()
-        logging.error(f"Не вдалось додати студента {name}. На курсі №{course_id} вже є такий студент.")
-        if not exists:
-            session.add(Students(student_name=name, student_age=age, course_id=course_id))
-            logging.info(f"До бази даних Students_orm був доданий студент: {name}, вік: {age}, курс: {course_id}")
-
-    session.commit()
+    exists = session.query(Students).filter_by(student_name=name, course_id=course_id).first()
+    if exists:
+        logging.warning(f"Студент '{name}' вже записаний на курс №{course_id}.")
+    else:
+        session.add(Students(student_name=name, student_age=age, course_id=course_id))
+        session.commit()
+        logging.info(f"Додано студента: {name}, курс: {course_id}")
     session.close()
-
-add_student('Oleh', 21, 3)
 
 # UPDATE - апдейтимо атрибути для однієї сутності з заданим імʼям
-def upd_one_student_age(name, age, course_id):
+def upd_one_student_age(name: str, age: int, course_id: int):
     session = Session()
-    # фільтруємо по name та course_id
-    # фільтрацію можна змінити за бажанням
     student = session.query(Students).filter_by(student_name=name, course_id=course_id).first()
-
-    # атрибут який будемо апдейтити
-    student.student_age = age
-    logging.info(f"Студенту {name} з курсу №{course_id} було змінено вік на {age}")
-
-    session.commit()
+    if not student:
+        logging.warning(f"Студента '{name}' (курс {course_id}) не знайдено.")
+    else:
+        student.student_age = age
+        session.commit()
+        logging.info(f"Оновлено вік студента {name} (курс {course_id}) → {age} років.")
     session.close()
-
-upd_one_student_age("Oleh", 28, 3)
 
 # UPDATE - апдейтимо атрибути для усіх сутностей з заданим імʼям
-def upd_all_student(name,age):
+def upd_all_student(name: str, age: int):
     session = Session()
     students = session.query(Students).filter_by(student_name=name).all()
-
-    # цикл котрий перебирає усіх студентів по заданому імені та робить апдейт
+    if not students:
+        logging.warning(f"Студентів із іменем '{name}' не знайдено.")
     for student in students:
         student.student_age = age
-    logging.info(f"Усім студентам з імʼям: {name} було змінено вік на: {age}")
-
     session.commit()
     session.close()
-
-upd_all_student("Oleh",30)
+    logging.info(f"Усі '{name}' тепер мають {age} років.")
 
 # JOIN - по course_id
-def display_students(course_id):
+def display_students_by_course(course_id: int):
     session = Session()
-
     result = (
         session.query(Students, Courses)
         .join(Courses, Students.course_id == Courses.course_id)
-        .filter(Students.course_id == course_id) .all()
+        .filter(Students.course_id == course_id)
+        .all()
     )
-
     for student, course in result:
         print(f"Студент: {student.student_name}, Вік: {student.student_age}, Курс: {course.course_name}")
-
-    print("-" * 20)
     session.close()
-
-display_students(2)
 
 # JOIN - за імʼям
-def display_students(name):
+def display_students_by_name(name: str):
     session = Session()
-
     result = (
         session.query(Students, Courses)
         .join(Courses, Students.course_id == Courses.course_id)
-        .filter(Students.student_name == name) .all()
+        .filter(Students.student_name == name)
+        .all()
     )
-
     for student, course in result:
         print(f"Студент: {student.student_name}, Вік: {student.student_age}, Курс: {course.course_name}")
-
     session.close()
 
-display_students("Oleh")
+if __name__ == "__main__":
+    default_values()
+    add_course("Geometry")
+    add_student("Oleh", 21, 3)
+    upd_one_student_age("Oleh", 28, 3)
+    upd_all_student("Oleh", 30)
+    display_students_by_course(2)
+    display_students_by_name("Oleh")
