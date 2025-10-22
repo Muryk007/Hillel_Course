@@ -35,9 +35,25 @@ services:
     depends_on:
       app:
         condition: service_completed_successfully
-    command: ["pytest", "-v"]
+    # Тільки запускаємо тести і зберігаємо результати
+    command: ["pytest", "-v", "--alluredir=/app/allure-results"]
     volumes:
       - .:/app
+      - ./allure-results:/app/allure-results
+
+  allure:
+    image: frankescobar/allure-docker-service
+    container_name: allure_server
+    depends_on:
+      - tests
+    ports:
+      - "5050:5050"
+    volumes:
+      - ./allure-results:/app/allure-results
+      - ./allure-report:/app/allure-report
+    environment:
+      CHECK_RESULTS_EVERY_SECONDS: 3
+      KEEP_HISTORY: 1
 
 volumes:
   db_data:
