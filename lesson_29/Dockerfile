@@ -11,4 +11,4 @@ COPY . /app
 RUN pip install --no-cache-dir sqlalchemy psycopg2-binary pytest
 
 # За замовчуванням запускаємо тести
-CMD ["pytest", "-v"]
+CMD ["pytest", "-v", "--alluredir=/app/allure-results"]
