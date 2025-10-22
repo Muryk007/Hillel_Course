@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   db:
     image: postgres:15
@@ -21,25 +19,41 @@ services:
     build: .
     container_name: hillel_app
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/Hillel_Course_DB
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/Hillel_Course_DB
     depends_on:
       db:
         condition: service_healthy
     command: ["python", "database.py"]
     volumes:
-      - ..:/app
+      - .:/app
 
   tests:
     build: .
     container_name: hillel_tests
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/Hillel_Course_DB
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/Hillel_Course_DB
     depends_on:
       app:
         condition: service_completed_successfully
-    command: ["pytest", "-v"]
+    # Тільки запускаємо тести і зберігаємо результати
+    command: ["pytest", "-v", "--alluredir=/app/allure-results"]
     volumes:
-      - ..:/app
+      - .:/app
+      - ./allure-results:/app/allure-results
+
+  allure:
+    image: frankescobar/allure-docker-service
+    container_name: allure_server
+    depends_on:
+      - tests
+    ports:
+      - "5050:5050"
+    volumes:
+      - ./allure-results:/app/allure-results
+      - ./allure-report:/app/allure-report
+    environment:
+      CHECK_RESULTS_EVERY_SECONDS: 3
+      KEEP_HISTORY: 1
 
 volumes:
   db_data:
