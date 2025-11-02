@@ -1,0 +1,104 @@
+pipeline {
+    agent any
+
+    environment {
+        VENV_DIR = 'venv'
+        EMAIL_TO = 'InsertYour@Mail.Here'
+    }
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                echo 'Крок 1: Отримуємо код з GitHub...'
+                // Jenkins автоматично зробить checkout з SCM (Git)
+                checkout([$class: 'GitSCM',
+                    branches: [[name: '*/main']],
+                    userRemoteConfigs: [[url: 'https://github.com/Muryk007/Hillel_Course.git']]
+                ])
+            }
+        }
+
+        stage('Install dependencies') {
+            steps {
+                echo '🔹 Крок 2: Встановлюємо залежності...'
+                dir('lesson_16') {
+                    script {
+                        // Визначаємо, чи Jenkins працює на Windows
+                        def isWindows = isUnix() == false
+
+                        if (isWindows) {
+                            bat '''
+                                python -m venv venv
+                                call venv\\Scripts\\activate
+                                pip install --upgrade pip
+                                pip install pytest
+                            '''
+                        } else {
+                            sh '''
+                                python3 -m venv venv
+                                . venv/bin/activate
+                                pip install --upgrade pip
+                                pip install pytest
+                            '''
+                        }
+                    }
+                }
+            }
+        }
+
+
+        stage('Run tests') {
+            steps {
+                echo '🔹 Крок 3: Запускаємо автотести...'
+                dir('lesson_16') {
+                    script {
+                        def isWindows = isUnix() == false
+
+                        if (isWindows) {
+                            bat '''
+                                call venv\\Scripts\\activate
+                                pytest --junitxml=..\\test-results.xml --maxfail=1 --disable-warnings -v
+                            '''
+                        } else {
+                            sh '''
+                            . venv/bin/activate
+                            pytest --junitxml=../test-results.xml --maxfail=1 --disable-warnings -v
+                            '''
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Publish test results') {
+            steps {
+                echo 'Крок 4: Публікуємо результати тестування...'
+                junit 'test-results.xml'
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Надсилаємо результати тестування...'
+            emailext(
+                subject: "Результати тестування Python проекту: ${currentBuild.fullDisplayName}",
+                body: """<p>Pipeline: <b>${env.JOB_NAME}</b></p>
+                         <p>Build #: ${env.BUILD_NUMBER}</p>
+                         <p>Статус: <b>${currentBuild.currentResult}</b></p>
+                         <p><a href="${env.BUILD_URL}">Переглянути результати в Jenkins</a></p>""",
+                to: "${EMAIL_TO}",
+                attachLog: true
+            )
+        }
+
+        success {
+            echo 'Тести пройшли успішно!'
+        }
+
+        failure {
+            echo 'Тести завершилися з помилками!'
+        }
+    }
+}
